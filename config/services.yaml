@@ -4,12 +4,22 @@
 # Put parameters here that don't need to change on each machine where the app is deployed
 # https://symfony.com/doc/current/best_practices/configuration.html#application-related-configuration
 parameters:
+    app.url_omniva_find: !php/const App\Model\ShippingProvider\Omniva::URL_FIND
+    app.url_omniva_register: !php/const App\Model\ShippingProvider\Omniva::URL_REGISTER
+
+    app.url_ups_register: !php/const App\Model\ShippingProvider\UPS::URL_REGISTER
 
 services:
     # default configuration for services in *this* file
     _defaults:
         autowire: true      # Automatically injects dependencies in your services.
         autoconfigure: true # Automatically registers your services as commands, event subscribers, etc.
+
+    _instanceof:
+        App\Model\ShippingProvider\ShippingProviderInterface:
+            tags: ['app.shipping_provider']
+            autowire: true
+#            lazy: true
 
     # makes classes in src/ available to be used as services
     # this creates a service per class whose id is the fully-qualified class name
@@ -29,3 +39,54 @@ services:
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones
+    App\Command\:
+        resource: '../src/Command/'
+        tags:
+            -  { name: console.command }
+
+    app.http_client_omniva:
+        class: App\Model\Mock\HttpClient\Omniva
+        arguments:
+            - {
+                find:
+                  {
+                      url: '%app.url_omniva_find%',
+                      response: '@App\Model\Mock\HttpClient\Response\Omniva\Find'
+                  },
+                register:
+                  {
+                      url: '%app.url_omniva_register%',
+                      response: '@App\Model\Mock\HttpClient\Response\Omniva\Register'
+                  }
+            }
+
+    app.http_client_ups:
+        class: App\Model\Mock\HttpClient\UPS
+        arguments:
+            - {
+                register:
+                  {
+                      url: '%app.url_ups_register%',
+                      response: '@App\Model\Mock\HttpClient\Response\UPS\Register'
+                  }
+            }
+
+    app.shipping_provider_ups:
+        class: App\Model\ShippingProvider\UPS
+        arguments:
+            $httpClient: '@app.http_client_ups'
+            $dataExtractor: '@App\Model\DataExtractor\Request\UPS\Register'
+
+    app.shipping_provider_omniva:
+        class: App\Model\ShippingProvider\Omniva
+        arguments:
+            $httpClient: '@app.http_client_omniva'
+            $findDataExtractor: '@App\Model\DataExtractor\Request\Omniva\Find'
+            $registerDataExtractor: '@App\Model\DataExtractor\Request\Omniva\Register'
+
+    App\Registry\ShippingProvider:
+        arguments:
+            - {
+                ups: '@app.shipping_provider_ups',
+                omniva: '@app.shipping_provider_omniva'
+            }

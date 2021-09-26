@@ -6,8 +6,16 @@ namespace App\Entity;
 
 class Order
 {
+    /*
+     * sito turbut nereiketu, nes toks dalykas turbut butu nustatytas duombazeje
+     */
+    private const DEFAULT_SHIPPING_PROVIDER = 'ups';
+
     /** @var string */
     private $id;
+
+    /** @var string */
+    private $shippingProviderKey = self::DEFAULT_SHIPPING_PROVIDER;
 
     /** @var string */
     private $street;
@@ -22,18 +30,6 @@ class Order
     private $country;
 
     /**
-     * Shipping provider key.
-     * Other options might be `dhl`, `omniva`
-     * Feel free to change this
-     *
-     * @return string
-     */
-    public function getShippingProviderKey(): string
-    {
-        return 'ups';
-    }
-
-    /**
      * @return string
      */
     public function getId(): string
@@ -43,10 +39,29 @@ class Order
 
     /**
      * @param string $id
+     *
+     * funkcija turbut nebutu reikalinga aplamai,
+     * nes id butu generuojamas automatiskai ORM'o
      */
     public function setId(string $id): void
     {
         $this->id = $id;
+    }
+
+    /**
+     * @return string
+     */
+    public function getShippingProviderKey(): string
+    {
+        return $this->shippingProviderKey;
+    }
+
+    /**
+     * @param string $shippingProviderKey
+     */
+    public function setShippingProviderKey(string $shippingProviderKey): void
+    {
+        $this->shippingProviderKey = $shippingProviderKey;
     }
 
     /**

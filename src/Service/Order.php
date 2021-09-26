@@ -5,11 +5,30 @@ declare(strict_types=1);
 namespace App\Service;
 
 use App\Entity\Order as OrderEntity;
+use App\Registry\ShippingProviderInterface as ShippingProviderRegistryInterface;
 
-class Order
+class Order implements OrderInterface
 {
-    public function registerShipping(OrderEntity $order)
+    /** @var ShippingProviderRegistryInterface */
+    private $shippingProviderRegistry;
+
+    /**
+     * @param ShippingProviderRegistryInterface $shippingProviderRegistry
+     */
+    public function __construct(ShippingProviderRegistryInterface $shippingProviderRegistry)
     {
-        //implement this function
+        $this->shippingProviderRegistry = $shippingProviderRegistry;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function registerShipping(OrderEntity $order): void
+    {
+        $shippingProvider = $this->shippingProviderRegistry->getShippingProvider(
+            $order->getShippingProviderKey()
+        );
+
+        $shippingProvider->notify($order);
     }
 }
